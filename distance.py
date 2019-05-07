@@ -23,14 +23,25 @@ def get_coords(nums, line):
 def find_positions(content):    
     lastLine = ""
     atoms = []
-    firstatom = 0
+    firstatom = []
+    firstatom.append(0)
+    newChain = False
+    i=0
     for line in content:
         if re.search("^ATOM",line):
-            
+            if newChain == True:
+                newChain = False
+                firstatom.append(firstatom[i-1] + int(re.search('\s\d+\s',line).group()))
+                print("First: ",firstatom[0], "\nThis: ", firstatom[1])
             if re.search("^C\s",line[13:15]) and re.search("^CA\s",lastLine[13:16]):
                 m = re.search("\d", line)
                 atoms.append(re.split(r"\s",line[m.start():])[0])
         elif (atoms == []):
-            firstatom += 1
+            firstatom[0] += 1
+        elif newChain == True:
+            break;
+        elif (re.search("^TER",line)):
+            newChain = True
+            i+=1
         lastLine = line
     return [firstatom, atoms]
