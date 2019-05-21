@@ -45,27 +45,28 @@ class Const_Plus_Args(argparse.Action):
             perform = [self.const]
         setattr(namespace, self.perf, perform)
 
+
 #---------------------------------------------------------------------------------------------------------------------
 # Parse command line arguments
 # add an ArgumentParser object
 
-parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, 
-description ='''A script to read the contents of a pdb file, and perform 3 operations:
+parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
+                                 description ='''A script to read the contents of a pdb file, and perform 3 operations:
 \n\t-\tfind the c_alpha-c distance for each residue in the structure
 \n\t-\tprint the sequence provided in the pdb file with residues that are not included in the structure as lowercase
 \n\t-\t...''')#TODO:
 
 # add each argument to the parser, along with the help line, for if the script is run with the -h argument, and the type of the argument
 # the input argument must be a string
-parser.add_argument("-i","--input",  help = "Path to input pdb file", type = str,  required = True)
-parser.add_argument("-d", "--distance",  perf = "perform", dest = "residues",   action=Const_Plus_Args, const = 1,  help='''Perform the c_alpha-c distance calculation.
+parser.add_argument("-i", "--input",  help="Path to input pdb file", type=str,  required=True)
+parser.add_argument("-d", "--distance",  perf="perform", dest="residues",   action=Const_Plus_Args, const=1,  help='''Perform the c_alpha-c distance calculation.
 Residues are chosen using arguments of the form '[Chain_Name],[Residue_Number]', where Residue_Number can be a single residue, or a start and end residue separated by a colon.  
 Multiple arguments can be provided in this way''')
-parser.add_argument("-s", "--sequence",  dest = "perform", action = "append_const",  const = 2,  help="Print the sequence with residues not included in the structure shown as lowercase")
+parser.add_argument("-s", "--sequence",  dest="perform", action="append_const",  const=2,  help="Print the sequence with residues not included in the structure shown as lowercase")
 #
 # TODO: 3rd function
 # -a makes the perform list contain all 3 integers so that it will perform all three tasks
-parser.add_argument("-a",  "--all",  dest="residues", perf = "perform",  action = Const_Plus_Args,  const = [1, 2, 3],  help='''Perform all three functions.  
+parser.add_argument("-a",  "--all",  dest="residues", perf="perform",  action=Const_Plus_Args,  const=[1, 2, 3],  help='''Perform all three functions.  
 Residues for the distance calculation are specified in the same way as for -d''')
 args = parser.parse_args()
 
@@ -88,16 +89,16 @@ if 1 in args.perform:
     # TODO: output only specified residues
     with open(input_file) as pdb:
         content = pdb.readlines()
-        firstatoms, chains, carbons = find_positions(content)
-        firstatom = {}
-        for i in range(0,len(firstatoms)):
-            firstatom[chains[i]] = firstatoms[i]
-        print(firstatom)
+        firstAtoms, chains, carbons = find_positions(content)
+        firstAtom = {}
+        for i in range(0, len(firstAtoms)):
+            firstAtom[chains[i]] = firstAtoms[i]
+        print(firstAtom)
         
         for c in carbons:
-            print(calculate_distance(int(c) + firstatoms[0], content))
+            print(calculate_distance(int(c)+firstAtoms[0],content))
 if 2 in args.perform:
-    ...#TODO: sequence
+    ...  #TODO: sequence
 if 3 in args.perform:
-    ...#TODO: 3rd option 
+    ...  #TODO: 3rd option
 

@@ -25,9 +25,9 @@ def get_coords(nums, line):
 def find_positions(content):
     lastLine = ""
     atoms = []
-    firstatom = []
+    firstAtom = []
     chains = []
-    firstatom.append(0)
+    firstAtom.append(0)
     newChain = False
     i = 0
     for line in content:
@@ -36,17 +36,17 @@ def find_positions(content):
                 chains.append(line[21])
             if newChain:
                 newChain = False
-                firstatom.append(firstatom[i-1] + int(re.search('\s\d+\s', line).group()))
+                firstAtom.append(firstAtom[i-1] + int(re.search('\s\d+\s', line).group()))
             
             if re.search("^C\s", line[13:15]) and re.search("^CA\s", lastLine[13:16]):
                 m = re.search("\d", line)
                 atoms.append(re.split(r"\s.", line[m.start():])[0])
         elif atoms == []:
-            firstatom[0] += 1
+            firstAtom[0] += 1
         elif newChain:
             break
         elif re.search("^TER", line):
             newChain = True
             i += 1
         lastLine = line
-    return [firstatom, chains, atoms]
+    return [firstAtom, chains, atoms]
