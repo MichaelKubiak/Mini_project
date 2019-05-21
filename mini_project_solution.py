@@ -2,11 +2,13 @@
 #---------------------------------------------------------------------------------------------------------------------
 # A script to read the contents of a pdb file, and perform 3 operations:
 #   -   find the c_alpha-c distance for each residue in the structure
-#   -   print the sequence provided in the pdb file with residues that are not included in the structure as lowercase
-#   -   ...TODO:
+#   -   print the sequence provided in the pdb file with residues that are not included in the structure as lowercase?
+#   -   ...TODO: Size of unit cell, type of unit cell, number of molecules per 1cm^3/ equivalent for NMR?
+#   -   Draw protein, highlight ss and produce image?
 #---------------------------------------------------------------------------------------------------------------------
 # Create Action classes for the actions that needs to be performed by the distance and all arguments (see parsing section)
 import argparse
+
 
 # Class is a subclass of the Action class in argparse
 class Const_Plus_Args(argparse.Action):
@@ -25,6 +27,7 @@ class Const_Plus_Args(argparse.Action):
     #   -   parser - the parser that called the class
     #   -   namespace - the namespace object to use
     #   -   values - the values of the command line arguments provided
+
     def __call__(self, parser, namespace, option_string,  values = "A,1",  nargs = '*'):
         # add each command line argument to the variable specfied as dest in the argparser call
         for arg in values:
@@ -34,7 +37,7 @@ class Const_Plus_Args(argparse.Action):
             items = argparse._copy_items(items)
             items.append(arg)
             setattr(namespace, self.dest, items)
-        if (option_string == "-d"):
+        if option_string == "-d":
             perform = getattr(namespace, self.perf, None)
             perform = argparse._copy_items(perform)
             perform.append(self.const)
@@ -45,6 +48,7 @@ class Const_Plus_Args(argparse.Action):
 #---------------------------------------------------------------------------------------------------------------------
 # Parse command line arguments
 # add an ArgumentParser object
+
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, 
 description ='''A script to read the contents of a pdb file, and perform 3 operations:
 \n\t-\tfind the c_alpha-c distance for each residue in the structure
@@ -58,7 +62,8 @@ parser.add_argument("-d", "--distance",  perf = "perform", dest = "residues",   
 Residues are chosen using arguments of the form '[Chain_Name],[Residue_Number]', where Residue_Number can be a single residue, or a start and end residue separated by a colon.  
 Multiple arguments can be provided in this way''')
 parser.add_argument("-s", "--sequence",  dest = "perform", action = "append_const",  const = 2,  help="Print the sequence with residues not included in the structure shown as lowercase")
-#TODO: 3rd function
+#
+# TODO: 3rd function
 # -a makes the perform list contain all 3 integers so that it will perform all three tasks
 parser.add_argument("-a",  "--all",  dest="residues", perf = "perform",  action = Const_Plus_Args,  const = [1, 2, 3],  help='''Perform all three functions.  
 Residues for the distance calculation are specified in the same way as for -d''')
@@ -69,22 +74,28 @@ from checking import checkInput
 input_file = checkInput(args.input)
 
 #---------------------------------------------------------------------------------------------------------------------
-from distance import find_positions, calculate_distance
-import sys
-try:
-    check = args.perform[0]
-except (TypeError):
+
+
+if not args.perform:
+    import sys
     print("No functions were chosen to be performed!")
     sys.exit(0)
+
+#---------------------------------------------------------------------------------------------------------------------
 if 1 in args.perform:
+    from distance import find_positions, calculate_distance
     # TODO: check that the residues are correctly formatted
+    # TODO: output only specified residues
     with open(input_file) as pdb:
         content = pdb.readlines()
-        pos = find_positions(content)
-        firstatom = pos[0]
-        carbons = pos[1]
+        firstatoms, chains, carbons = find_positions(content)
+        firstatom = {}
+        for i in range(0,len(firstatoms)):
+            firstatom[chains[i]] = firstatoms[i]
+        print(firstatom)
+        
         for c in carbons:
-            print(calculate_distance(int(c) + firstatom, content))
+            print(calculate_distance(int(c) + firstatoms[0], content))
 if 2 in args.perform:
     ...#TODO: sequence
 if 3 in args.perform:
