@@ -22,31 +22,45 @@ def get_coords(nums, line):
     return c
 
 
-def find_positions(content):
-    lastLine = ""
-    atoms = []
-    firstAtom = []
-    chains = []
-    firstAtom.append(0)
-    newChain = False
-    i = 0
-    for line in content:
-        if re.search("^ATOM", line):
-            if not line[21] in chains:
-                chains.append(line[21])
-            if newChain:
-                newChain = False
-                firstAtom.append(firstAtom[i-1] + int(re.search('\s\d+\s', line).group()))
-            
-            if re.search("^C\s", line[13:15]) and re.search("^CA\s", lastLine[13:16]):
-                m = re.search("\d", line)
-                atoms.append(re.split(r"\s.", line[m.start():])[0])
-        elif atoms == []:
-            firstAtom[0] += 1
-        elif newChain:
+def find_position(content, chain, residue, atom):
+    endpos, startpos = get_residue(chain,content,residue)
+
+    try:
+        # check if the atom variable is a number
+        pos = int(atom)
+        # if so find that atom number out of the residue
+        if startpos + (pos-1) > endpos:
+            print("Residue ", residue, " from chain ", chain, " does not have atom number ", pos)
+            return -1
+        else:
+            return startpos + pos
+
+    except ValueError:
+        # otherwise it will be a string
+        for i in range(startpos, endpos):
+            found = re.search(atom, content[i][14:17])
+            if found:
+                return i
+    return -1
+
+def get_residue(chain,content,residue):
+    startpos=0
+    endpos=0
+    inres=False
+    for i in range(0,len(content)):
+        line=content[i]
+        if re.search('^ATOM',line) and re.search(chain,line[21:23]) and re.search(residue,line[23:27]):
+            if not inres:
+                print("found start")
+                startpos=i
+                inres=True
+        elif inres:
+            endpos=i-1
             break
-        elif re.search("^TER", line):
-            newChain = True
-            i += 1
-        lastLine = line
-    return [firstAtom, chains, atoms]
+
+        if i==len(content) and startpos==0:
+            # should never reach this point
+            print("No atoms in provided file")
+            import sys
+            sys.exit(0)
+    return endpos,startpos

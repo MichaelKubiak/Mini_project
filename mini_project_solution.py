@@ -20,15 +20,15 @@ class Const_Plus_Args(argparse.Action):
     #   -   **kwargs - passes the rest of the arguments on to the superclass constructor
     def __init__(self,  option_strings, dest, perf, nargs='*',  **kwargs):
         # Call to the superclass so that variables don't need to be redefined here
-        super(Const_Plus_Args, self).__init__(option_strings, dest,  nargs = '*', **kwargs)
+        super(Const_Plus_Args, self).__init__(option_strings, dest,  nargs, **kwargs)
         # define the variable that is not in the constructor of the superclass
         self.perf = perf
-    # define the what happens when this class is called by the argument parser, with arguments:
+
+    # define what happens when this class is called by the argument parser, with arguments:
     #   -   parser - the parser that called the class
     #   -   namespace - the namespace object to use
     #   -   values - the values of the command line arguments provided
-
-    def __call__(self, parser, namespace, option_string,  values = "A,1",  nargs = '*'):
+    def __call__(self, parser, namespace, option_string,  values="A,1,1",  nargs='*'):
         # add each command line argument to the variable specfied as dest in the argparser call
         for arg in values:
             # get the current contents of the variable with the name stored in dest
@@ -59,8 +59,9 @@ parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpForm
 # add each argument to the parser, along with the help line, for if the script is run with the -h argument, and the type of the argument
 # the input argument must be a string
 parser.add_argument("-i", "--input",  help="Path to input pdb file", type=str,  required=True)
-parser.add_argument("-d", "--distance",  perf="perform", dest="residues",   action=Const_Plus_Args, const=1,  help='''Perform the c_alpha-c distance calculation.
-Residues are chosen using arguments of the form '[Chain_Name],[Residue_Number]', where Residue_Number can be a single residue, or a start and end residue separated by a colon.  
+parser.add_argument("-d", "--distance",  perf="perform", dest="residues",   action=Const_Plus_Args, const=1,  help='''Perform distance calculation 
+for specified atoms.  Atoms are chosen using arguments of the form '[Chain_Name],[Residue_Number],[Atom_Number]', 
+where Atom_Number can be a single atom or a start and end atom separated by a colon - the default argument is A,1,1.  
 Multiple arguments can be provided in this way''')
 parser.add_argument("-s", "--sequence",  dest="perform", action="append_const",  const=2,  help="Print the sequence with residues not included in the structure shown as lowercase")
 #
@@ -84,19 +85,20 @@ if not args.perform:
 
 #---------------------------------------------------------------------------------------------------------------------
 if 1 in args.perform:
-    from distance import find_positions, calculate_distance
+    from distance import find_position, calculate_distance
     # TODO: check that the residues are correctly formatted
     # TODO: output only specified residues
     with open(input_file) as pdb:
         content = pdb.readlines()
-        firstAtoms, chains, carbons = find_positions(content)
+        #firstAtoms, chains, carbons = find_positions(content,'A', 1, 1)
+        pos = find_position(content,'A','1','1')
         firstAtom = {}
         for i in range(0, len(firstAtoms)):
             firstAtom[chains[i]] = firstAtoms[i]
         print(firstAtom)
         
         for c in carbons:
-            print(calculate_distance(int(c)+firstAtoms[0],content))
+            print(calculate_distance(int(c)+firstAtoms[0], content))
 if 2 in args.perform:
     ...  #TODO: sequence
 if 3 in args.perform:
