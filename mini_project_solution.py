@@ -27,13 +27,12 @@ class Const_Plus_Args(argparse.Action):
     # define what happens when this class is called by the argument parser, with arguments:
     #   -   parser - the parser that called the class
     #   -   namespace - the namespace object to use
-    #   -   values - the values of the command line arguments provided
-    def __call__(self, parser, namespace, option_string,  values="A,1,1",  nargs='*'):
+    #   -   values - the values of the command line arguments provided - default is A,1,1:A,1,2
+    def __call__(self, parser, namespace, option_string,  values="A,1,1:A,1,2",  nargs='*'):
         # add each command line argument to the variable specfied as dest in the argparser call
         for arg in values:
             # get the current contents of the variable with the name stored in dest
             items = getattr(namespace, self.dest, None)
-            # 
             items = argparse._copy_items(items)
             items.append(arg)
             setattr(namespace, self.dest, items)
@@ -59,7 +58,7 @@ parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpForm
 # add each argument to the parser, along with the help line, for if the script is run with the -h argument, and the type of the argument
 # the input argument must be a string
 parser.add_argument("-i", "--input",  help="Path to input pdb file", type=str,  required=True)
-parser.add_argument("-d", "--distance",  perf="perform", dest="residues",   action=Const_Plus_Args, const=1,  help='''Perform distance calculation 
+parser.add_argument("-d", "--distance",  perf="perform", dest="atoms",   action=Const_Plus_Args, const=1,  help='''Perform distance calculation 
 for specified atoms.  Atoms are chosen using arguments of the form '[Chain_Name],[Residue_Number],[Atom_Number]', 
 where Atom_Number can be a single atom or a start and end atom separated by a colon - the default argument is A,1,1.  
 Multiple arguments can be provided in this way''')
@@ -86,19 +85,29 @@ if not args.perform:
 #---------------------------------------------------------------------------------------------------------------------
 if 1 in args.perform:
     from distance import find_position, calculate_distance
+    import re
     # TODO: check that the residues are correctly formatted
     # TODO: output only specified residues
     with open(input_file) as pdb:
         content = pdb.readlines()
-        #firstAtoms, chains, carbons = find_positions(content,'A', 1, 1)
-        pos = find_position(content,'A','1','1')
-        firstAtom = {}
-        for i in range(0, len(firstAtoms)):
-            firstAtom[chains[i]] = firstAtoms[i]
-        print(firstAtom)
-        
-        for c in carbons:
-            print(calculate_distance(int(c)+firstAtoms[0], content))
+        for atom in args.atoms:
+            if re.search(':', atom):  # if both specified
+                atoms = atom.split(':')
+                startpos = find_position(content, atoms[0])
+                endpos = find_position(content, atoms[1])
+                print(calculate_distance(content, startpos, endpos))
+
+
+
+            # if neither specified
+        # pos = find_position(content, ['A','1','1'])
+        # firstAtom = {}
+        # for i in range(0, len(firstAtoms)):
+        #     firstAtom[chains[i]] = firstAtoms[i]
+        # print(firstAtom)
+        #
+        # for c in carbons:
+        #     print(calculate_distance(int(c)+firstAtoms[0], content))
 if 2 in args.perform:
     ...  #TODO: sequence
 if 3 in args.perform:

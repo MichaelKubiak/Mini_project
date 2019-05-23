@@ -4,12 +4,12 @@ import re
 from math import sqrt
 
 
-def calculate_distance(cnum,content):
+def calculate_distance(content, startpos, endpos):
     print("\n ")
-    print("C alpha coordinates:")
-    ca = get_coords(re.finditer("(\d|-).{0,3}\.", content[cnum-1]), content[cnum-1])
-    print("C coordinates:")
-    c = get_coords(re.finditer("(\d|-).{0,3}\.", content[cnum]), content[cnum])
+    print("Atom 1 coordinates:")
+    ca = get_coords(re.finditer("(\d|-).{0,3}\.", content[startpos]), content[startpos])
+    print("Atom 2 coordinates:")
+    c = get_coords(re.finditer("(\d|-).{0,3}\.", content[endpos]), content[endpos])
     return sqrt(pow(c["x"]-ca["x"],2) + pow(c["y"]-ca["y"],2) + pow(c["z"]-ca["z"],2))
 
 
@@ -22,12 +22,12 @@ def get_coords(nums, line):
     return c
 
 
-def find_position(content, chain, residue, atom):
-    endpos, startpos = get_residue(chain,content,residue)
+def find_position(content, atom):
+    endpos, startpos = get_residue(content,atom[0],atom[1])
 
     try:
         # check if the atom variable is a number
-        pos = int(atom)
+        pos = int(atom[2])
         # if so find that atom number out of the residue
         if startpos + (pos-1) > endpos:
             print("Residue ", residue, " from chain ", chain, " does not have atom number ", pos)
@@ -38,12 +38,12 @@ def find_position(content, chain, residue, atom):
     except ValueError:
         # otherwise it will be a string
         for i in range(startpos, endpos):
-            found = re.search(atom, content[i][14:17])
+            found = re.search(atom[2], content[i][14:17])
             if found:
                 return i
     return -1
 
-def get_residue(chain,content,residue):
+def get_residue(content,chain,residue):
     startpos=0
     endpos=0
     inres=False
