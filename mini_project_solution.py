@@ -28,7 +28,7 @@ class Const_Plus_Args(argparse.Action):
     #   -   parser - the parser that called the class
     #   -   namespace - the namespace object to use
     #   -   values - the values of the command line arguments provided - default is A,1,1:A,1,2
-    def __call__(self, parser, namespace, option_string,  values="A,1,1:A,1,2",  nargs='*'):
+    def __call__(self, parser, namespace, values=["A,1,1:A,1,2"], option_string=None,  nargs='*'):
         # add each command line argument to the variable specfied as dest in the argparser call
         for arg in values:
             # get the current contents of the variable with the name stored in dest
