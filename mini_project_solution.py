@@ -82,6 +82,8 @@ if not args.perform:
     print("No functions were chosen to be performed!")
     sys.exit(0)
 
+if not args.atoms:
+    args.atoms = ["A,1,1"]
 #---------------------------------------------------------------------------------------------------------------------
 if 1 in args.perform:
     from distance import find_position, calculate_distance
@@ -93,13 +95,19 @@ if 1 in args.perform:
         for atom in args.atoms:
             if re.search(':', atom):  # if both specified
                 atoms = atom.split(':')
-                startpos = find_position(content, atoms[0])
-                endpos = find_position(content, atoms[1])
-                print(calculate_distance(content, startpos, endpos))
+                startpos = find_position(content, atoms[0].split(','))
+                endpos = find_position(content, atoms[1].split(','))
+
+            else: # if only first specified
+                startpos = find_position(content, atom.split(','))
+                endpos = startpos + 1
+
+
+            print("Distance between atoms: ", calculate_distance(content, startpos, endpos))
 
 
 
-            # if neither specified
+
         # pos = find_position(content, ['A','1','1'])
         # firstAtom = {}
         # for i in range(0, len(firstAtoms)):
