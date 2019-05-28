@@ -3,11 +3,24 @@
 import re
 
 
+
+def get_refs(content, pattern):
+    references=[]
+    inref=False
+    for line in content:
+        if re.search(pattern,line):
+            references.append(line)
+            inref=True
+        elif inref:
+            break
+    return references
+
+
 def get_id(content, chains):
-    references = get_refs(content)
+    references = get_refs(content, "^DBREFS")
 
     if chains:
-        accessions=[]
+        accessions = []
         for chain in chains:
             for line in references:
                 if re.search("\s"+chain+"\s", line):
@@ -17,27 +30,23 @@ def get_id(content, chains):
         return references[0][33:42].strip(" ")
 
 
-def get_refs(content):
-    references=[]
-    inref=False
-    for line in content:
-        if re.search("^DBREF",line):
-            references.append(line)
-            inref=True
-        elif inref:
-            break
-    return references
-
 
 def get_structure_seq(content, chains):
-    seqreslines = []
-    for line in content:
-        inseqres = False
-        if re.search("^SEQRES", line):
-            inseqres = True
-            seqreslines.append(line)
-        elif inseqres:
-            break
+    seqreslines = get_refs(content, "^SEQRES")
+
+    acids=[]
+    if chains:
+        for chain in chains:
+            for line in seqreslines:
+                if re.search("\s"+chain+"\s",line):
+                    acids.append(line[19:70].split(" "))
+        sequence = ''
+        for line in acids:
+            for acid in line:
+                if not acid is '':
+                    sequence += abrevdict[acid]
+        return sequence
+
 
 
 abrevdict = {

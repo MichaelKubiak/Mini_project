@@ -151,12 +151,13 @@ if 2 in args.perform:
 
 if 3 in args.perform:
     from Bio import Entrez
-    from seqinspection import get_id
+    from seqinspection import get_id, get_structure_seq
     with open(input_file) as file:
         content = file.readlines()
     Entrez.email = "A.N.Other@example.com"
     result = Entrez.efetch(db="protein", id=get_id(content,args.chain), rettype="fasta")
     print(result.read())
+    sequence = get_structure_seq(content,args.chain)
 
 
 
