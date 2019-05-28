@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 #---------------------------------------------------------------------------------------------------------------------
 # A script to read the contents of a pdb file, and perform 3 operations:
-#   -   find the c_alpha-c distance for each residue in the structure
-#   -   print the sequence provided in the pdb file with residues that are not included in the structure as lowercase?
-#   -   ...TODO: Size of unit cell, type of unit cell, number of molecules per 1cm^3/ equivalent for NMR?
-#   -   Draw protein, highlight ss and produce image?
+#   -   find the distance between stated atoms in the structure
+#   -   TODO: Draw protein, highlight ss and produce image?
+#   -   TODO: print the sequence provided in the pdb file with residues that are not included in the structure as lowercase?
+#   -   TODO: Size of unit cell, type of unit cell, number of molecules per 1cm^3/ equivalent for NMR?
 #---------------------------------------------------------------------------------------------------------------------
 # Create Action classes for the actions that needs to be performed by the distance and all arguments (see parsing section)
 import argparse
@@ -51,19 +51,21 @@ class Const_Plus_Args(argparse.Action):
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
                                  description ='''A script to read the contents of a pdb file, and perform 3 operations:
-\n\t-\tfind the c_alpha-c distance for each residue in the structure
-\n\t-\tprint the sequence provided in the pdb file with residues that are not included in the structure as lowercase
+\n\t-\tFind the c_alpha-c distance for each residue in the structure
+\n\t-\tDraw the molecule in pymol, highlighting secondary structure
 \n\t-\t...''')#TODO:
 
 # add each argument to the parser, along with the help line, for if the script is run with the -h argument, and the type of the argument
 # the input argument must be a string
 parser.add_argument("-i", "--input",  help="Path to input pdb file", type=str,  required=True)
-parser.add_argument("-d", "--distance",  perf="perform", dest="atoms",   action=Const_Plus_Args, const=1,  help='''Perform distance calculation 
+parser.add_argument("-c", "--calculate",  perf="perform", dest="atoms",   action=Const_Plus_Args, const=1,  help='''Perform distance calculation 
 for specified atoms.  Atoms are chosen using arguments of the form '[Chain_Name],[Residue_Number],[Atom_Number]', 
 where Atom_Number can be a single atom or a start and end atom separated by a colon - the default argument is A,1,1.  
 Multiple arguments can be provided in this way''')
-parser.add_argument("-s", "--sequence",  dest="perform", action="append_const",  const=2,  help="Print the sequence with residues not included in the structure shown as lowercase")
-#
+parser.add_argument("-d", "--draw", dest="perform", action="append_const", const=2, help='''Draw the molecule in pymol, highlighting secondary structure
+the output pngs of the cartoon and ball and stick representations.  The files will be named after the input pdb file unless specified with the --outputpng argument.
+To use this option, you will need the pymol module installed.''')
+parser.add_argument("-o", "--outputpng", help = "Path to output png file", type=str, required=False)
 # TODO: 3rd function
 # -a makes the perform list contain all 3 integers so that it will perform all three tasks
 parser.add_argument("-a",  "--all",  dest="residues", perf="perform",  action=Const_Plus_Args,  const=[1, 2, 3],  help='''Perform all three functions.  
@@ -88,36 +90,59 @@ if not args.atoms:
 if 1 in args.perform:
     from distance import find_position, calculate_distance
     import re
-    # TODO: check that the residues are correctly formatted
-    # TODO: output only specified residues
     with open(input_file) as pdb:
         content = pdb.readlines()
         for atom in args.atoms:
             if re.search(':', atom):  # if both specified
                 atoms = atom.split(':')
-                startpos = find_position(content, atoms[0].split(','))
-                endpos = find_position(content, atoms[1].split(','))
+                atom0 = atoms[0].split(',')
+                atom1 = atoms[1].split(',')
+                if len(atom0) == 3 and len(atom1) == 3:
+                    print("Calculating distance between:")
+                    startpos = find_position(content, atom0)
+                    if startpos == -1:
+                        print ("Calculation not performed")
+                        break
+                    endpos = find_position(content, atom1)
+                    if endpos == -1:
+                        print ("Calculation not performed")
+                        break
+                else:
+                    print("Incorrectly formatted atom reference, please ensure that each atom reference is formatted as [Chain],[Residue number],[Atom]")
+                    break
 
             else: # if only first specified
                 startpos = find_position(content, atom.split(','))
                 endpos = startpos + 1
 
+            if not startpos == -1 and not endpos == -1:
+                print("Distance between atoms: ", calculate_distance(content, startpos, endpos))
+            else:
+                print("Calculation not performed")
 
-            print("Distance between atoms: ", calculate_distance(content, startpos, endpos))
+#---------------------------------------------------------------------------------------------------------------------
 
-
-
-
-        # pos = find_position(content, ['A','1','1'])
-        # firstAtom = {}
-        # for i in range(0, len(firstAtoms)):
-        #     firstAtom[chains[i]] = firstAtoms[i]
-        # print(firstAtom)
-        #
-        # for c in carbons:
-        #     print(calculate_distance(int(c)+firstAtoms[0], content))
 if 2 in args.perform:
-    ...  #TODO: sequence
+    if args.outputpng:
+        output_file = args.outputpng
+    else:
+        outputfile = input_file.split(".")[0]
+    import __main__
+    __main__.pymol_argv=["pymol", "-qc"]
+    from pymol import cmd, finish_launching
+    finish_launching()
+    cmd.bg_color("white")
+    cmd.load(input_file)
+    cmd.colour("Blue", "ss s")
+    cmd.colour("Yellow", "ss h")
+    cmd.png(output_file + "_cartoon")
+    cmd.show("cartoon","all")
+
+    cmd.hide("everything","all")
+
+    cmd.png(output_file + "_lines")
+    cmd.show("lines","all")
+#---------------------------------------------------------------------------------------------------------------------
 if 3 in args.perform:
-    ...  #TODO: 3rd option
+    ...
 
