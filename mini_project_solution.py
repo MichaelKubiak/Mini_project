@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 #---------------------------------------------------------------------------------------------------------------------
 # A script to read the contents of a pdb file, and perform 3 operations:
-#   -   find the distance between stated atoms in the structure
-#   -   TODO: Draw protein, highlight ss and produce image?
-#   -   TODO: print the sequence provided in the pdb file with residues that are not included in the structure as lowercase?
-#   -   TODO: Size of unit cell, type of unit cell, number of molecules per 1cm^3/ equivalent for NMR?
+#   -   Find the distance between stated atoms in the structure
+#   -   Draw the protein using pymol, highlight secondary structure and produce images of the cartoon and stick representations
+#   -   Print the sequence of the accession number for stated chains in the pdb file with residues that are not included in the
+#       structure as lowercase and output to file
 #---------------------------------------------------------------------------------------------------------------------
 # Create Action classes for the actions that needs to be performed by the distance and all arguments (see parsing section)
 import argparse
@@ -36,12 +36,9 @@ class Const_Plus_Args(argparse.Action):
             items = argparse._copy_items(items)
             items.append(arg)
             setattr(namespace, self.dest, items)
-        if option_string == "-d":
-            perform = getattr(namespace, self.perf, None)
-            perform = argparse._copy_items(perform)
-            perform.append(self.const)
-        else:
-            perform = [self.const]
+        perform = getattr(namespace, self.perf, None)
+        perform = argparse._copy_items(perform)
+        perform.append(self.const)
         setattr(namespace, self.perf, perform)
 
 
@@ -51,25 +48,23 @@ class Const_Plus_Args(argparse.Action):
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
                                  description ='''A script to read the contents of a pdb file, and perform 3 operations:
-\n\t-\tFind the c_alpha-c distance for each residue in the structure
-\n\t-\tDraw the molecule in pymol, highlighting secondary structure
+\n\t-\tFind the distance between stated atoms in the structure,
+\n\t-\tDraw the molecule in pymol, highlighting secondary structure, then produce images of the cartoon and stick structures,
 \n\t-\t...''')#TODO:
 
 # add each argument to the parser, along with the help line, for if the script is run with the -h argument, and the type of the argument
 # the input argument must be a string
 parser.add_argument("-i", "--input",  help="Path to input pdb file", type=str,  required=True)
-parser.add_argument("-c", "--calculate",  perf="perform", dest="atoms",   action=Const_Plus_Args, const=1,  help='''Perform distance calculation 
+parser.add_argument("-c", "--calculate",  perf="perform", dest="atoms", action=Const_Plus_Args, const=1,  help='''Perform distance calculation 
 for specified atoms.  Atoms are chosen using arguments of the form '[Chain_Name],[Residue_Number],[Atom_Number]', 
 where Atom_Number can be a single atom or a start and end atom separated by a colon - the default argument is A,1,1.  
 Multiple arguments can be provided in this way''')
-parser.add_argument("-d", "--draw", dest="perform", action="append_const", const=2, help='''Draw the molecule in pymol, highlighting secondary structure
-the output pngs of the cartoon and ball and stick representations.  The files will be named after the input pdb file unless specified with the --outputpng argument.
+parser.add_argument("-d", "--draw", perf="perform", dest="outputpng", action=Const_Plus_Args, nargs="?", const=2, help='''Draw the molecule in pymol, highlighting secondary structure
+the output pngs of the cartoon and ball and stick representations.  The files will be named after the input pdb file unless specified with an argument.
 To use this option, you will need the pymol module installed.''')
-parser.add_argument("-o", "--outputpng", help = "Path to output png file", type=str, required=False)
-# TODO: 3rd function
-# -a makes the perform list contain all 3 integers so that it will perform all three tasks
-parser.add_argument("-a",  "--all",  dest="residues", perf="perform",  action=Const_Plus_Args,  const=[1, 2, 3],  help='''Perform all three functions.  
-Residues for the distance calculation are specified in the same way as for -d''')
+parser.add_argument("-s", "--sequence", perf="perform", dest="chain", action=Const_Plus_Args, const=3, help='''Produce a fasta file containing the NCBI sequence
+of the protein with the amino acids that are not present in the structure shown in lower case. The file will be named after the input file.  
+If no argument is provided, the first chain in the file will be chosen.''')
 args = parser.parse_args()
 
 # check that the input file exists using checking.py module
@@ -88,6 +83,7 @@ if not args.atoms:
     args.atoms = ["A,1,1"]
 #---------------------------------------------------------------------------------------------------------------------
 if 1 in args.perform:
+    print ("Distance calculation\n____________________")
     from distance import find_position, calculate_distance
     import re
     with open(input_file) as pdb:
@@ -98,7 +94,7 @@ if 1 in args.perform:
                 atom0 = atoms[0].split(',')
                 atom1 = atoms[1].split(',')
                 if len(atom0) == 3 and len(atom1) == 3:
-                    print("Calculating distance between:")
+                    print("\nCalculating distance between:")
                     startpos = find_position(content, atom0)
                     if startpos == -1:
                         print ("Calculation not performed")
@@ -112,7 +108,13 @@ if 1 in args.perform:
                     break
 
             else: # if only first specified
+                print("\nCalculating distance between:")
                 startpos = find_position(content, atom.split(','))
+                if startpos == -1:
+                        print ("Calculation not performed")
+                        break
+                else:
+                    print ("and the next atom in the structure")
                 endpos = startpos + 1
 
             if not startpos == -1 and not endpos == -1:
@@ -120,9 +122,11 @@ if 1 in args.perform:
             else:
                 print("Calculation not performed")
 
+    print ("\n\n\n")
 #---------------------------------------------------------------------------------------------------------------------
 
 if 2 in args.perform:
+    print("Drawing molecule\n________________\n")
     if args.outputpng:
         output_file = args.outputpng
     else:
@@ -143,6 +147,16 @@ if 2 in args.perform:
     cmd.png(output_file + "_lines")
     cmd.show("lines","all")
 #---------------------------------------------------------------------------------------------------------------------
+
+
 if 3 in args.perform:
-    ...
+    from Bio import Entrez
+    from seqinspection import get_id
+    with open(input_file) as file:
+        content = file.readlines()
+    Entrez.email = "A.N.Other@example.com"
+    result = Entrez.efetch(db="protein", id=get_id(content,args.chain), rettype="fasta")
+    print(result.read())
+
+
 
