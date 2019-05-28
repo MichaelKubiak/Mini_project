@@ -43,7 +43,7 @@ def get_structure_seq(content, chains):
         sequence = ''
         for line in acids:
             for acid in line:
-                if not acid is '':
+                if acid is not '':
                     sequence += abrevdict[acid]
         return sequence
 
