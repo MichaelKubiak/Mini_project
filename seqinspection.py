@@ -3,21 +3,20 @@
 import re
 
 
-
 def get_refs(content, pattern):
-    references=[]
-    inref=False
+    references = []
+    inref = False
     for line in content:
         if re.search(pattern,line):
             references.append(line)
-            inref=True
+            inref = True
         elif inref:
             break
     return references
 
 
 def get_id(content, chains):
-    references = get_refs(content, "^DBREFS")
+    references = get_refs(content, "^DBREF")
 
     if chains:
         accessions = []
@@ -30,26 +29,40 @@ def get_id(content, chains):
         return references[0][33:42].strip(" ")
 
 
+def getSequence(acids):
+    sequence = ''
+    for line in acids:
+        for acid in line:
+            if acid is not '':
+                sequence+=abrevdict[acid]
+    return sequence
+
 
 def get_structure_seq(content, chains):
     seqreslines = get_refs(content, "^SEQRES")
-
-    acids=[]
+    sequences=[]
     if chains:
-        for chain in chains:
-            for line in seqreslines:
-                if re.search("\s"+chain+"\s",line):
-                    acids.append(line[19:70].split(" "))
-        sequence = ''
-        for line in acids:
-            for acid in line:
-                if acid is not '':
-                    sequence += abrevdict[acid]
-        return sequence
 
+        for chain in chains:
+            acids=[]
+            for line in seqreslines:
+                if re.search("\s"+chain+"\s", line):
+                    acids.append(line[19:70].split(" "))
+            sequence = getSequence(acids)
+            sequences.append(sequence)
+
+    else:
+        chain = seqreslines[0][11:15]
+        for line in seqreslines:
+            if re.search(chain, line):
+                acids.append(line[19:70].split(" "))
+        sequence = getSequence(acids)
+        sequences.append(sequence)
+    return sequences
 
 
 abrevdict = {
+
     'ALA': 'A', 'ARG': 'R', 'ASN': 'N', 'ASP': 'D',
     'CYS': 'C', 'GLU': 'E', 'GLN': 'Q', 'GLY': 'G',
     'HIS': 'H', 'ILE': 'I', 'LEU': 'L', 'LYS': 'K',

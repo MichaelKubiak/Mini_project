@@ -152,12 +152,30 @@ if 2 in args.perform:
 if 3 in args.perform:
     from Bio import Entrez
     from seqinspection import get_id, get_structure_seq
+    import io
     with open(input_file) as file:
         content = file.readlines()
     Entrez.email = "A.N.Other@example.com"
     result = Entrez.efetch(db="protein", id=get_id(content,args.chain), rettype="fasta")
-    print(result.read())
-    sequence = get_structure_seq(content,args.chain)
+    sequences = get_structure_seq(content, args.chain)
+
+    results = []
+    for i in range (len(sequences)):
+        j=0
+        for line in result.readlines()[j:]:
+            if line.startswith(">") and j>0:
+                break
+            elif not line.startswith(">"):
+                results[i] += line
+                j += 1
+            else:
+                results.append("")
+
+        print(result.read())
+
+    print(results)
+
+
 
 
 
