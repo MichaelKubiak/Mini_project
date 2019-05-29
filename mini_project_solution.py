@@ -148,32 +148,19 @@ if 2 in args.perform:
     cmd.show("lines","all")
 #---------------------------------------------------------------------------------------------------------------------
 
-
 if 3 in args.perform:
     from Bio import Entrez
-    from seqinspection import get_id, get_structure_seq
+    import seqinspection as seqin
     import io
     with open(input_file) as file:
         content = file.readlines()
     Entrez.email = "A.N.Other@example.com"
-    result = Entrez.efetch(db="protein", id=get_id(content,args.chain), rettype="fasta")
-    sequences = get_structure_seq(content, args.chain)
+    result = Entrez.efetch(db="protein", id=seqin.get_id(content,args.chain), rettype="fasta")
+    sequences = seqin.get_structure_seq(content, args.chain)
 
-    results = []
-    for i in range (len(sequences)):
-        j=0
-        for line in result.readlines()[j:]:
-            if line.startswith(">") and j>0:
-                break
-            elif not line.startswith(">"):
-                results[i] += line
-                j += 1
-            else:
-                results.append("")
+    ncbiSeqs = seqin.extract_seqs(result, sequences)
 
-        print(result.read())
-
-    print(results)
+    seqin.find_structure_seq(sequences, ncbiSeqs)
 
 
 

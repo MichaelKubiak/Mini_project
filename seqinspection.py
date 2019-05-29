@@ -69,3 +69,36 @@ abrevdict = {
     'MET': 'M', 'PHE': 'F', 'PRO': 'P', 'SER': 'S',
     'THR': 'T', 'TRP': 'W', 'TYR': 'Y', 'VAL': 'V'
 }
+
+
+def extract_seqs(result, sequences):
+
+    entrezresults = result.readlines()
+    results = []
+    j = 0
+    k = 0
+    for i in range(len(sequences)):
+
+        for line in entrezresults[j:]:
+            if line.startswith(">") and j > k:
+                k = j
+                break
+            elif not line.startswith(">"):
+                results[i] += line
+                j += 1
+            else:
+
+                j += 1
+                results.append("")
+    ncbiSeqs=[]
+    for seq in results:
+        ncbiSeqs.append(seq.replace("\n", ""))
+    return ncbiSeqs
+
+
+def find_structure_seq(sequences, ncbiSeqs):
+    from alignment import align
+
+    for i in range (len(sequences)):
+
+        print(align(sequences[i],ncbiSeqs[i]))
