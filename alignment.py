@@ -57,9 +57,11 @@ def s(x,y):
         error("s(x,y) called for illegal character y")
     return BLOSUM50[charToIndex[ix]][charToIndex[iy]]
 
+
 def gamma(g):
 
     return -g*d
+
 
 def align(seq1,seq2):
 

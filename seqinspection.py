@@ -101,4 +101,5 @@ def find_structure_seq(sequences, ncbiSeqs):
 
     for i in range (len(sequences)):
 
-        print(align(sequences[i],ncbiSeqs[i]))
+        print(align(sequences[i], ncbiSeqs[i]))
+        #TODO: output fasta file based on gaps in structure sequence
