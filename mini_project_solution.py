@@ -11,7 +11,7 @@
 import argparse
 from checking import checkInput
 import sys
-from distance import find_position,calculate_distance
+from distance import calculate_distance, parse_arguments
 import re
 import __main__
 from pymol import cmd,finish_launching
@@ -112,42 +112,8 @@ if 1 in args.perform:
         content = pdb.readlines()
     # loop through arguments
     for atom in args.atoms:
-        if re.search(':', atom):  # if both atoms are specified
-            # split up the atom pair
-            atoms = atom.split(':')
-            # split each atom into chain, residue and atom
-            atom0 = atoms[0].split(',')
-            atom1 = atoms[1].split(',')
-            # ensure that the atoms have the correct number of parameters
-            if len(atom0) == 3 and len(atom1) == 3:
-                # find the coordinates of each atom, stopping if the residue is not present
-                print("\nCalculating distance between:")
-                startpos = find_position(content, atom0)
-                if startpos == -1:
-                    print ("Calculation not performed")
-                    break
-                endpos = find_position(content, atom1)
-                if endpos == -1:
-                    print ("Calculation not performed")
-                    break
-            else:
-                print("Incorrectly formatted atom reference, please ensure that each atom reference is formatted as [Chain],[Residue number],[Atom]")
-                break
-
-        else: # if only first specified
-            if len(atom[0] == 3):
-                print("\nCalculating distance between:")
-                # find the coordinates of the atom, stopping if the residue is not present
-                startpos = find_position(content, atom.split(','))
-                if startpos == -1:
-                    print ("Calculation not performed")
-                    break
-                else:
-                    print ("and the next atom in the structure")
-                endpos = startpos + 1
-            else:
-                print("Incorrectly formatted atom reference, please ensure that each atom reference is formatted as [Chain],[Residue number],[Atom]")
-                break
+        print("\nCalculating distance between:")
+        startpos, endpos = parse_arguments(atom, content)
 
         if not startpos == -1 and not endpos == -1:
             # calculate the distance between the atoms, and print it
