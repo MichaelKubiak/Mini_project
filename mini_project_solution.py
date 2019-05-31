@@ -113,12 +113,14 @@ if 1 in args.perform:
     # loop through arguments
     for atom in args.atoms:
         print("\nCalculating distance between:")
+        # for each argument, unpack it into the separate atoms, then return the line number for the two atoms within the file
         startpos, endpos = parse_arguments(atom, content)
 
         if not startpos == -1 and not endpos == -1:
             # calculate the distance between the atoms, and print it
             print("Distance between atoms: ", calculate_distance(content, startpos, endpos))
         else:
+            # if there was an error, let the user know
             print("Calculation not performed")
 
     print ("\n\n\n")
@@ -146,15 +148,17 @@ if 2 in args.perform:
     # colour helices yellow
     cmd.colour("Yellow", "ss h")
     # export a png with the cartoon representation
-    cmd.png(output_fname+"_cartoon")
     cmd.show("cartoon","all")
+    cmd.png(output_fname+"_cartoon")
+    # wait for the export command to finish
+    time.sleep(2)
 
     # hide the cartoon representation
     cmd.hide("everything","all")
 
     # export a png with the line representation
-    cmd.png(output_fname+"_lines")
     cmd.show("lines","all")
+    cmd.png(output_fname+"_lines")
     # wait for the export command to finish
     time.sleep(2)
     print("\n")
@@ -170,11 +174,19 @@ if 3 in args.perform:
     Entrez.email = "A.N.Other@example.com"
     # get the accession numbers for each selected chain, badchains contains the names of chains that were not found.
     accessions, badchains = seqin.get_id(content, args.chain)
-    # compare the chain arguments with badchains, removing those that are not present in the file
+    # compare the chain arguments (if present) with badchains, removing those that are not present in the file
     chains = []
-    for chain in args.chain:
-        if not chain in badchains:
-            chains.append(chain)
+
+    if args.chain:
+        for chain in args.chain:
+            if not chain in badchains:
+                chains.append(chain)
+
+    # if there are no chain arguments, add the first chain in the DBREF section to the chains list
+    else:
+        chains.append(seqin.get_refs(content, r"^DBREF")[0][12])
+    if not chains:
+        sys.exit(0)
     # get the ncbi files of the selected sequences through Entrez
     result = Entrez.efetch(db="protein", id=accessions, rettype="fasta")
 
