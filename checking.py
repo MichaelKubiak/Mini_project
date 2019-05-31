@@ -1,5 +1,8 @@
 # Module to contain checking functions etc.
 #---------------------------------------------------------------------------------------------------------------------
+import sys
+
+
 # Function to check that the input file exists - copied from my solution to the previous assignment
 def checkInput(input_file):
     #check that file exists
@@ -12,5 +15,6 @@ def checkInput(input_file):
         return input_file
     # if the file wasn't in the stated place, do the following
     except FileNotFoundError:
-        # ask the user for another file name, and check that that one exists
-        return checkInput(input("The specified input file cannot be found, please provide another path:\n"))
+        # inform user of lack of file and close
+        print("The specified input file cannot be found, exiting script")
+        sys.exit(0)

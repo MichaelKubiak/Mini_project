@@ -1,6 +1,7 @@
 # A module containing the functions and variables for finding which amino acids are present in a structure
 #---------------------------------------------------------------------------------------------------------------------
 import re
+from alignment import align
 
 
 def get_refs(content, pattern):
@@ -20,11 +21,19 @@ def get_id(content, chains):
 
     if chains:
         accessions = []
+        i = 0
+        badchains = []
         for chain in chains:
+            i+=1
             for line in references:
                 if re.search("\s"+chain+"\s", line):
                     accessions.append(line[33:42].strip(" "))
-        return accessions
+
+            if len(accessions)<i:
+                print ("Chain", chain, "is not present in file, it will be ignored")
+                i += 1
+                badchains.append(chain)
+        return accessions, badchains
     else:
         return references[0][33:42].strip(" ")
 
@@ -96,10 +105,20 @@ def extract_seqs(result, sequences):
     return ncbiSeqs
 
 
-def find_structure_seq(sequences, ncbiSeqs):
-    from alignment import align
+def compare_sequences(sequence,ncbiSeq):
 
-    for i in range (len(sequences)):
+    seqs = align(sequence, ncbiSeq)
+    if seqs == False:
+        return -1
 
-        print(align(sequences[i], ncbiSeqs[i]))
-        #TODO: output fasta file based on gaps in structure sequence
+    seq, ncbiSeq = seqs
+
+    outputSeq = ""
+
+    for i in range(len(seq)):
+        if seq[i] == "-":
+            outputSeq += ncbiSeq[i].lower()
+        else:
+            outputSeq += seq[i]
+
+    return outputSeq

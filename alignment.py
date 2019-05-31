@@ -31,11 +31,6 @@ BLOSUM50=[
 
 charToIndex = []
 
-def error(msg):
-    import sys
-    print("Error:", msg)
-    sys.exit(1)
-
 for i in range (26):
     charToIndex.append(-1)
 
@@ -44,17 +39,21 @@ for i in range(len(blosumChars)):
 
 def s(x,y):
     if ord(x) < ord('A') or ord(x) > ord('Z'):
-        error("s(x,y) called for illegal character x")
+        print (x, "is not a legal charachter, alignment is not possible")
+        return "error"
     if ord(y) < ord('A') or ord(y) > ord('Z'):
-        error("s(x,y) called for illegal character y")
+        print(y,"is not a legal charachter, alignment is not possible")
+        return "error"
 
     ix = ord(x)-ord('A')
     iy = ord(y)-ord('A')
 
     if charToIndex[ix] == -1:
-        error("s(x,y) called for illegal character x")
+        print(x, "is not a legal charachter, alignment is not possible")
+        return "error"
     if charToIndex[iy] == -1:
-        error("s(x,y) called for illegal character y")
+        print(y, "is not a legal charachter, alignment is not possible")
+        return "error"
     return BLOSUM50[charToIndex[ix]][charToIndex[iy]]
 
 
@@ -63,7 +62,7 @@ def gamma(g):
     return -g*d
 
 
-def align(seq1,seq2):
+def align(seq1, seq2):
 
     T = 1
     L = 2
@@ -92,7 +91,10 @@ def align(seq1,seq2):
                 F[i][j] = -i*d
                 P[i][j] = T
             else:
-                diag = F[i-1][j-1] + s(seq1[i-1],seq2[j-1])
+                match_score = s(seq1[i-1], seq2[j-1])
+                if match_score == "error":
+                    return False
+                diag = F[i-1][j-1] + match_score
                 left = F[i][j-1] - d
                 top = F[i-1][j] - d
 
