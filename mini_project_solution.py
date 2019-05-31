@@ -11,7 +11,7 @@
 import argparse
 from checking import checkInput
 import sys
-from distance import calculate_distance, parse_arguments
+from calculate_distance import calculate_distance, parse_arguments
 import re
 import __main__
 from pymol import cmd,finish_launching
