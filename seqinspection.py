@@ -84,6 +84,7 @@ def getSequence(acids):
     for line in acids:
         for acid in line:
             if acid is not '':
+                # add that one letter code to the sequence
                 sequence += abrevdict[acid]
     return sequence
 
