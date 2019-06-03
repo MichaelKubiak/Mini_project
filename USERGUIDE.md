@@ -21,7 +21,7 @@ This program can be installed using the 'clone or download' button on github, th
 
 ### Running the Program
 
-Now that the program is installed, it can be run like any other program, navigate to the correct directory using e.g. `cd ~/pdb_parser_mk626', then run the program with the example pdb file by typing `./pdb_parser_mk626.py -i 1vyd.pdb -c -d -s`.
+Now that the program is installed, it can be run like any other program, navigate to the correct directory using e.g. `cd ~/pdb_parser_mk626`, then run the program with the example pdb file by typing `./pdb_parser_mk626.py -i 1vyd.pdb -c -d -s`.
 
 #### Arguments
 
