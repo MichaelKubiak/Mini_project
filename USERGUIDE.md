@@ -31,4 +31,4 @@ Now that the program is installed, it can be run like any other program, navigat
 
 * -d or --draw - requires the draw function to be performed, this argument can be followed by one argument containing the preferred name of the png output files.  If no argument is used, the png files will be named after the pdb input file (1vyd.pdb becomes 1vyd_cartoon.png etc.).
 
-* -s or --sequence - requires the sequence function to be performed, this argument can be followed by any number of arguments which are the names of the chains for which the sequence should be output.  As for calculate, the COMPND section shows chain names within a file.
+* -s or --sequence - requires the sequence function to be performed, this argument can be followed by any number of arguments which are the names of the chains for which the sequence should be output.  As for calculate, the COMPND section shows chain names within a file.  If no argument is given, the first chain in the file will be used.
