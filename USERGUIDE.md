@@ -1,7 +1,7 @@
 # PDB Parser USERGUIDE
 
 This program takes a pdb file, and parses it to perform three possible functions:
-1) Calculate the distance between two atoms within the structure,
+1) Calculate the distance between two atoms within the structure, outputing this information to the terminal,
 2) Draw the structure using Pymol, highlighting beta strands in blue and helices in yellow, then output 2 png files, one with the cartoon representation, and the other with the stick representation,
 3) Produce a FASTA file containing the amino acid sequence of a chain, showing residues not present in the structure as lowercase.
 
