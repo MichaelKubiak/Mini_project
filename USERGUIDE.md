@@ -1,4 +1,4 @@
-# pdb_parser_mk626
+# PDB Parser USERGUIDE
 
 This program takes a pdb file, and parses it to perform three possible functions:
 1) Calculate the distance between two atoms within the structure,
