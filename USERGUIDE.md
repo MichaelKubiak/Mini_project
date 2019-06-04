@@ -1,3 +1,4 @@
+<!--please view this file on github or through another markdown interpreter-->
 # PDB Parser USERGUIDE
 
 This program takes a pdb file, and parses it to perform three possible functions:
