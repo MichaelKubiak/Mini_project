@@ -3,7 +3,7 @@
 import sys
 
 
-# Function to check that the input file exists - copied from my solution to the previous assignment
+# Function to check that the input file exists
 def checkInput(input_file):
     #check that file exists
     try:

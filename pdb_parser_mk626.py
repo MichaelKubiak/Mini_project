@@ -8,14 +8,23 @@
 #---------------------------------------------------------------------------------------------------------------------
 # Import required modules
 
+# modules for argument parsing
 import argparse
 from checking import checkInput
+
+# module for exiting if no further code will be executed
 import sys
+
+# modules for calculating atom-atom distances
 from calculate_distance import calculate_distance, parse_arguments
 import re
+
+#modules for drawing the structure
 import __main__
 from pymol import cmd,finish_launching
 import time
+
+# modules for making the fasta file
 from Bio import Entrez
 import seqinspection as seqin
 
@@ -41,7 +50,7 @@ class Const_Plus_Args(argparse.Action):
     #   -   parser - the parser that called the class
     #   -   namespace - the namespace object to use
     #   -   values - the values of the command line arguments provided - default is A,1,1:A,1,2
-    def __call__(self, parser, namespace, values=["A,1,1:A,1,2"], option_string=None,  nargs='*'):
+    def __call__(self, parser, namespace, values, option_string=None,  nargs='*'):
         # add each command line argument to the variable specfied as dest in the argparser call
         for arg in values:
             # get the current contents of the variable with the name stored in dest
@@ -52,10 +61,15 @@ class Const_Plus_Args(argparse.Action):
             items.append(arg)
             # set the contents of the the variable with the name stored in dest to the new list
             setattr(namespace, self.dest, items)
-        # repeat the actions done above (on dest) with the variable with the name stored in perf
+
+        # repeat the actions done above with the variable with the name stored in perf
+        # get current contents
         perform = getattr(namespace, self.perf, None)
+        # change to a list
         perform = argparse._copy_items(perform)
+        # add new argument
         perform.append(self.const)
+        # set the variable
         setattr(namespace, self.perf, perform)
 
 
@@ -67,23 +81,27 @@ parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
                                  description ='''A script to read the contents of a pdb file and perform 3 operations:
 \n\t-\tFind the distance between stated atoms in the structure,
 \n\t-\tDraw the molecule in pymol, highlighting secondary structure, then produce images of the cartoon and stick structures,
-\n\t-\tFind which residues are missing from the structure, and output a fasta file with missing residues in lower case ''')
+\n\t-\tFind which residues are missing from the structure, and output a fasta file with missing residues in lower case.''')
 
 # add each argument to the parser
 # the input argument must be a string and must be present
 parser.add_argument("-i", "--input",  help="Path to input pdb file", type=str,  required=True)
-# each function argument uses the action class defined above so that it can both tell the script that it is present, and provide arguments
-parser.add_argument("-c", "--calculate",  perf="perform", dest="atoms", action=Const_Plus_Args, const=1,  help='''Perform distance calculation for specified atoms.  
+# each function argument uses the action class defined above so that it can both tell the script that it is present and provide arguments
+# -c puts the value 1 into 'perform' and its arguments into 'atoms', sets the default values if no arguments given
+parser.add_argument("-c", "--calculate",  perf="perform", dest="atoms", action=Const_Plus_Args, const=1, default=["A,1,1:A,1,CA"],  help='''Perform distance calculation for specified atoms.  
 Format - '[Chain_Name],[Residue_Number],[Atom_Type/Number]', either singly or in colon-separated pairs.  
 "A,1,1:A,1,CA" is the default argument.''')
-parser.add_argument("-d", "--draw", perf="perform", dest="outputpng", action=Const_Plus_Args, nargs="?", const=2, help='''Draw the molecule in pymol, highlighting secondary structure,
+# -d puts the value 2 into 'perform' and its argument into 'outputpng', more arguments can be provided, but only the first will be used, nargs = '?' caused errors
+parser.add_argument("-d", "--draw", perf="perform", dest="outputpng", action=Const_Plus_Args, const=2, help='''Draw the molecule in pymol, highlighting secondary structure,
 Output pngs of the cartoon and line representations.  
 The file name will be based on the input file specified with an argument.
 To use this option, you will need the pymol module installed.''')
+# -s puts the value 3 into 'perform' and its arguments into 'chain'
 parser.add_argument("-s", "--sequence", perf="perform", dest="chain", action=Const_Plus_Args, const=3, help='''Find the sequence residues missing from the structure.
 Produce a fasta file containing the NCBI sequence of the protein those residues shown in lower case. 
 The file will be named after the input file.  
 If no argument is provided, chain A will be inspected.''')
+# parse the arguments to the object args
 args = parser.parse_args()
 
 # check that the input file exists using checking.py module
@@ -93,8 +111,12 @@ input_file = checkInput(args.input)
 #---------------------------------------------------------------------------------------------------------------------
 # Close if no functions were chosen
 
-if not args.perform:
-    print("No functions were chosen to be performed!")
+# check whether args.perform exists
+try:
+    args.perform
+except AttributeError:
+    # if not, inform the user and exit
+    print("No functions were chosen to be performed!  \nUse the argument -h for more information!")
     sys.exit(0)
 
 
@@ -102,9 +124,7 @@ if not args.perform:
 # Find the distance between the selected atoms
 
 if 1 in args.perform:
-    # if atoms were not chosen set the default values
-    if not args.atoms:
-        args.atoms=["A,1,1:A,1,CA"]
+
     # print section heading
     print ("Distance calculation\n____________________")
     # open file safely and put the information into a list
@@ -116,23 +136,24 @@ if 1 in args.perform:
         # for each argument, unpack it into the separate atoms, then return the line number for the two atoms within the file
         startpos, endpos = parse_arguments(atom, content)
 
+        # if the function completed correctly
         if not startpos == -1 and not endpos == -1:
             # calculate the distance between the atoms, and print it
             print("Distance between atoms: ", calculate_distance(content, startpos, endpos))
         else:
-            # if there was an error, let the user know
+            # if there was an error, inform the user
             print("Calculation not performed")
 
-    print ("\n\n\n")
+    print ("\n")
 #---------------------------------------------------------------------------------------------------------------------
 # Draw the molecule using pymol, highlighting the secondary structural elements.  Export pngs of cartoon and line representations.
 
 if 2 in args.perform:
     # print section heading
     print("Drawing molecule\n________________\n")
-    # set the output filename based on the argument provided, or the input filename
+    # set the output filename based on the argument provided, or the input filename if no argument was provided
     if args.outputpng:
-        output_fname = ''.join(args.outputpng)
+        output_fname = args.outputpng[0]
     else:
         output_fname = input_file.split(".")[0]
     # run pymol with the -q and -c arguments to suppress the startup messages, and run without gui
@@ -176,16 +197,23 @@ if 3 in args.perform:
     accessions, badchains = seqin.get_id(content, args.chain)
     # compare the chain arguments (if present) with badchains, removing those that are not present in the file
     chains = []
-
+    # if there were chain arguments
     if args.chain:
+        # check each argument
         for chain in args.chain:
+            # if the argument is not in the list of chains that do not exist
             if not chain in badchains:
+                # add the chain to the chains variable
                 chains.append(chain)
 
-    # if there are no chain arguments, add the first chain in the DBREF section to the chains list
+    # if there are no chain arguments
     else:
+        # add the first chain in the DBREF section to the chains list
         chains.append(seqin.get_refs(content, r"^DBREF")[0][12])
+
+    # if there is nothing in chains after comparison with badchains
     if not chains:
+        # close the program
         sys.exit(0)
     # get the ncbi files of the selected sequences through Entrez
     result = Entrez.efetch(db="protein", id=accessions, rettype="fasta")
